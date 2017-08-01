@@ -126,7 +126,7 @@ export class HttpRequestHandler {
         req.on('socket', (socket) => {
           socket.on('connect', () => {
             this.logDebug(
-              `[CONN_OPEN] ${socket.localAddress}/${socket.localPort} -> ` + 
+              `[CONN_OPEN] ${socket.localAddress}/${socket.localPort} -> ` +
               `${socket._host} (${socket.remoteAddress}/${socket.remotePort})`);
             socket._ctx_local = `${socket.localAddress}/${socket.localPort}`;
           });
@@ -134,7 +134,7 @@ export class HttpRequestHandler {
             this.logDebug(
               `[CONN_CLOSE] ${socket._ctx_local} -> ` +
               `${socket._host} (${socket.remoteAddress}/${socket.remotePort})`);
-              socket._ctx_local = null;
+            socket._ctx_local = null;
           });
         });
       }
@@ -185,6 +185,7 @@ export class HttpRequestHandler {
   }
 
   private logDebug(message: string): void {
+    // tslint:disable-next-line:no-console
     console.log(`${new Date().toISOString()} ${message}`);
   }
 }
