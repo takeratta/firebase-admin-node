@@ -37,6 +37,7 @@ export type FirebaseAppOptions = {
   databaseAuthVariableOverride?: Object
   databaseURL?: string,
   storageBucket?: string,
+  httpDebug?: boolean,
 };
 
 /**

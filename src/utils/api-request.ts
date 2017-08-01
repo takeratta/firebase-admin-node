@@ -67,6 +67,12 @@ export class HttpRequestHandler {
     // Only https endpoints.
     return new Promise((resolve, reject) => {
       const req = https.request(options, (res) => {
+        if (this.isDebugEnabled()) {
+          this.logDebug(
+            `[HTTP_RESP] ${res.socket.localAddress}/${res.socket.localPort} ` +
+            `https://${res.req.method} ${res.socket._host}${res.req.path} ` +
+            `${res.statusCode} ${res.statusMessage}`);
+        }
         let buffers: Buffer[] = [];
         res.on('data', (buffer: Buffer) => buffers.push(buffer));
         res.on('end', () => {
@@ -116,11 +122,31 @@ export class HttpRequestHandler {
         });
       });
 
+      if (this.isDebugEnabled()) {
+        req.on('socket', (socket) => {
+          socket.on('connect', () => {
+            this.logDebug(
+              `[CONN_OPEN] ${socket.localAddress}/${socket.localPort} -> ` + 
+              `${socket._host} (${socket.remoteAddress}/${socket.remotePort})`);
+            socket._ctx_local = `${socket.localAddress}/${socket.localPort}`;
+          });
+          socket.on('close', (hasError) => {
+            this.logDebug(
+              `[CONN_CLOSE] ${socket._ctx_local} -> ` +
+              `${socket._host} (${socket.remoteAddress}/${socket.remotePort})`);
+              socket._ctx_local = null;
+          });
+        });
+      }
+
       if (timeout) {
         // Listen to timeouts and throw a network error.
         req.on('socket', (socket) => {
           socket.setTimeout(timeout);
           socket.on('timeout', () => {
+            this.logDebug(
+              `[CONN_TIMEOUT] ${socket._ctx_local} -> ${socket._host} ` +
+              `(${socket.remoteAddress}/${socket.remotePort})`);
             req.abort();
 
             const networkTimeoutError = new FirebaseAppError(
@@ -152,6 +178,14 @@ export class HttpRequestHandler {
 
       req.end();
     });
+  }
+
+  protected isDebugEnabled(): boolean {
+    return false;
+  }
+
+  private logDebug(message: string): void {
+    console.log(`${new Date().toISOString()} ${message}`);
   }
 }
 
@@ -188,14 +222,16 @@ export class SignedApiRequestHandler extends HttpRequestHandler {
       data: Object,
       headers: Object,
       timeout: number): Promise<Object> {
-    let ancestorSendRequest = super.sendRequest;
-
     return this.app_.INTERNAL.getToken().then((accessTokenObj) => {
       let headersCopy: Object = deepCopy(headers);
       let authorizationHeaderKey = 'Authorization';
       headersCopy[authorizationHeaderKey] = 'Bearer ' + accessTokenObj.accessToken;
-      return ancestorSendRequest(host, port, path, httpMethod, data, headersCopy, timeout);
+      return super.sendRequest(host, port, path, httpMethod, data, headersCopy, timeout);
     });
+  }
+
+  protected isDebugEnabled(): boolean {
+    return this.app_.options.httpDebug === true;
   }
 }
 
