@@ -49,8 +49,8 @@
   "types": "./lib/index.d.ts",
   "dependencies": {
     "google-auth-library": "^0.10.0",
-    "@google-cloud/storage": "^1.2.1",
-    "@google-cloud/firestore": "~0.8.2",
+    "@google-cloud/storage": "^3.0.0",
+    "@google-cloud/firestore": "~0.14.1",
     "@types/google-cloud__storage": "^1.1.1",
     "@types/jsonwebtoken": "^7.1.33",
     "@types/node": "^8.0.32",
